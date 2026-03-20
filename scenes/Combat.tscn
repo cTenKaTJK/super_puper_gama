@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://cunkfv074wm7q"]
+
+[ext_resource type="Script" uid="uid://d1p4nhbfwgomp" path="res://scripts/game_master.gd" id="1_4r6s1"]
+[ext_resource type="PackedScene" uid="uid://01i2pevuveoy" path="res://scenes/Hero.tscn" id="2_hrlpu"]
+[ext_resource type="PackedScene" uid="uid://ddxn1qw42c3s3" path="res://scenes/Enemy.tscn" id="3_0qy8o"]
+
+[node name="CombatScene" type="Node2D" unique_id=921132435]
+
+[node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy")]
+script = ExtResource("1_4r6s1")
+hero = NodePath("Hero")
+enemy = NodePath("Enemy")
+
+[node name="TurnTimer" type="Timer" parent="GameMaster" unique_id=660013388]
+one_shot = true
+
+[node name="Hero" parent="GameMaster" unique_id=1613334882 instance=ExtResource("2_hrlpu")]
+position = Vector2(237, 445)
+
+[node name="Enemy" parent="GameMaster" unique_id=921884441 instance=ExtResource("3_0qy8o")]
+position = Vector2(798, 252)
+
+[connection signal="timeout" from="GameMaster/TurnTimer" to="GameMaster" method="_on_turn_timer_timeout"]
