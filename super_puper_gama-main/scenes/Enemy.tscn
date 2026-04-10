@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://ddxn1qw42c3s3"]
+
+[ext_resource type="Script" uid="uid://dp52doqijmx02" path="res://scripts/enemy.gd" id="1_3gvst"]
+[ext_resource type="Texture2D" uid="uid://qpxxi650xrro" path="res://src/sprites/enemies/enemy1_sprite1.jpg" id="2_55jtl"]
+
+[node name="Enemy" type="Node2D" unique_id=921884441]
+script = ExtResource("1_3gvst")
+
+[node name="EnemySprite" type="Sprite2D" parent="." unique_id=185448403]
+texture = ExtResource("2_55jtl")

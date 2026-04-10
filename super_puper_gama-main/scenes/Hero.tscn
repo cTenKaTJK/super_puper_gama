@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://01i2pevuveoy"]
+
+[ext_resource type="Script" uid="uid://dvxplhdea6rkh" path="res://scripts/hero.gd" id="1_xsdj3"]
+[ext_resource type="Texture2D" uid="uid://cvbsy1v08vmne" path="res://src/sprites/hero/hero_sprite_1.jpg" id="2_3a4aj"]
+
+[node name="Hero" type="Node2D" unique_id=1613334882]
+script = ExtResource("1_xsdj3")
+
+[node name="HeroSprite" type="Sprite2D" parent="." unique_id=878207319]
+texture = ExtResource("2_3a4aj")
+
+[node name="HeroLabel" type="Label" parent="." unique_id=1223968976]
+offset_left = -60.0
+offset_top = 120.0
+offset_right = 60.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(0.11260525, 0.5078991, 0, 1)
+theme_override_colors/font_shadow_color = Color(0.9372549, 0.42745098, 0.44313726, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
