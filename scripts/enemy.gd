@@ -5,8 +5,8 @@ class_name Enemy
 signal health_updated(current_hp, max_hp)
 
 var display_name: String = "Enemy"
-var max_hp: int = 20
-var attack_power: int = 4
+var max_hp: int = 10
+var attack_power: int = 1
 var count: int = 0
 
 var current_hp: int

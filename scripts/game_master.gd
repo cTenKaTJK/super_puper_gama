@@ -5,9 +5,14 @@ extends Node
 @export var popup_scene = preload("res://scenes/Particles.tscn")
 @export var hero: Hero
 @export var enemy: Enemy
+@export var battery_container: BatteryContainer
 @export var turn_time_limit: float = 2.0
+@export var battery_scene: PackedScene
+
 
 @onready var turn_timer: Timer = $TurnTimer
+
+
 
 var is_enemy_turn: bool = false
 var start_time
@@ -36,8 +41,49 @@ var turns: int = 0
 var active_objects: Array = []
 
 
+
+var batteries: Array = []
+
 func _ready():
+	find_batteries()
+	if hero:
+		update_batteries(hero.current_hp)
 	start_turn()
+
+func find_batteries():
+	batteries.clear()
+	var container = get_node("BatteryContainer")
+	if container == null:
+		print("Ошибка: BatteryContainer не найден на сцене!")
+		return
+	# Проверяем, что контейнер назначен
+	
+	for child in container.get_children():
+		if child.name.begins_with("Battery"):
+			batteries.append(child)
+		print("Найдена батарейка: ", child.name)
+	
+	batteries.sort_custom(func(a, b): return a.name < b.name)
+	print("Найдено батареек: ", batteries.size())
+
+
+func update_batteries(current_hp: int):
+	for i in range(batteries.size()):
+		var should_be_visible = (i < current_hp)
+		if batteries[i].visible != should_be_visible:
+			if should_be_visible:
+					# Анимация появления
+				var tween = create_tween()
+				tween.tween_property(batteries[i], "modulate:a", 1.0, 0.2)
+				batteries[i].visible = true
+			else:
+					# Анимация исчезновения
+				var tween = create_tween()
+				tween.tween_property(batteries[i], "modulate:a", 0.0, 0.2)
+				await tween.finished
+				batteries[i].visible = false
+			batteries[i].visible = should_be_visible
+
 
 
 func start_turn():
@@ -85,7 +131,7 @@ func spawn_slash_slider(event: Dictionary):
 	var slider = slider_scene.instantiate()
 	slider.checkpoints = event.checkpoints
 	slider.creation_time = Time.get_ticks_msec()
-	slider.lifetime = 3000
+	slider.lifetime = 1000
 	
 	slider.slider_hit.connect(_on_counter_success)
 	slider.slider_miss.connect(_on_counter_fail)
@@ -103,13 +149,14 @@ func _on_counter_fail(slider):
 	print("Промах!")
 	hero.take_damage(enemy.attack_power)
 	_on_obj_miss(slider)
+	update_batteries(hero.current_hp)
 
 
 func _on_obj_hit(obj):
 	var pos = obj.global_position
 	if obj.has_method("get_end_position"):
 		pos = obj.get_end_position()
-	show_popup("Hit!", pos)
+	show_popup("Counter!", pos)
 	active_objects.erase(obj)
 
 func _on_obj_miss(obj):
@@ -118,6 +165,8 @@ func _on_obj_miss(obj):
 		pos = obj.get_end_position()
 	show_popup("Miss!", pos)
 	active_objects.erase(obj)
+	
+	
 
 
 func _on_turn_timer_timeout():
