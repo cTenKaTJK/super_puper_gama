@@ -6,16 +6,23 @@ extends Node
 @export var hero: Hero
 @export var enemy: Enemy
 @export var battery_container: BatteryContainer
-@export var turn_time_limit: float = 2.0
 @export var battery_scene: PackedScene
+@export var action_menu: ActionMenu
+@export var death_screen: CanvasLayer
 
+@export var turn_time_limit: float = 3.0
 
 @onready var turn_timer: Timer = $TurnTimer
 
 
+var is_player_turn: bool = false
+var is_menu_open: bool = false
 
-var is_enemy_turn: bool = false
 var start_time
+var actions: Dictionary = {
+	"Атака": _attack_action,
+	"Лечение": _heal_action,
+	"Усиление": _buff_action,}
 var up_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
 		Vector2(400,200),
@@ -37,18 +44,30 @@ var down_slash_slider: Dictionary = {"type" : "slash",
 		Vector2(500,480),
 		Vector2(550,520),
 		Vector2(600,560)]}
+		
 var turns: int = 0
 var active_objects: Array = []
-
-
-
 var batteries: Array = []
+
 
 func _ready():
 	find_batteries()
 	if hero:
 		update_batteries(hero.current_hp)
+	action_menu.action_selected.connect(_on_action_selected)
 	start_turn()
+
+
+func _input(event):
+	# открытие меню атаки только во время хода игрока
+	if is_player_turn and not is_menu_open and event.is_action_pressed("ui_accept"):
+		open_menu()
+
+'''
+#############################################################
+						БАТАРЕЙКИ
+#############################################################
+'''
 
 func find_batteries():
 	batteries.clear()
@@ -84,21 +103,27 @@ func update_batteries(current_hp: int):
 				batteries[i].visible = false
 			batteries[i].visible = should_be_visible
 
-
+'''
+#############################################################
+						ХОДЫ
+#############################################################
+'''
 
 func start_turn():
 	print("-----------------------------------")
 	print("Начало хода")
-	is_enemy_turn = false
+	is_player_turn = true
 	turn_timer.wait_time = turn_time_limit
 	turn_timer.start()
 
 
 func start_enemy_turn():
+	if is_menu_open:
+		close_menu()
 	if turn_timer.is_stopped() == false:
 		turn_timer.stop()
 	print("Ход врага.")
-	is_enemy_turn = true
+	is_player_turn = false
 	await get_tree().create_timer(1.0).timeout
 	enemy_attack()
 
@@ -117,7 +142,7 @@ func enemy_attack():
 				print("Атака снизу!")
 				spawn_slash_slider(down_slash_slider)
 	await get_tree().create_timer(2.0).timeout
-	is_enemy_turn = false
+	is_player_turn = true
 	end_turn()
 
 
@@ -126,6 +151,67 @@ func end_turn():
 	turns += 1
 	start_turn()
 
+func lose():
+	if turn_timer.is_stopped() == false:
+		turn_timer.stop()
+	if is_menu_open:
+		close_menu()
+	show_death_screen()
+
+
+func show_death_screen():
+	get_tree().paused = true
+	death_screen.visible = true
+	action_menu.visible = false
+
+'''
+#############################################################
+					МЕНЮ АТАКИ
+#############################################################
+'''
+
+func open_menu():
+	is_menu_open = true
+	action_menu.set_actions(actions.keys())
+	action_menu.show_menu()
+
+func close_menu():
+	is_menu_open = false
+	action_menu.hide_menu()
+
+func _on_action_selected(action_name: String):
+	close_menu()
+	if actions.has(action_name):
+		actions[action_name].call()
+	else:
+		print("Неизвестное действие: ", action_name)
+
+
+func _attack_action():
+	enemy.take_damage(hero.attack_power)
+	if enemy.is_alive():
+		start_enemy_turn()
+	else:
+		# конец боя
+		pass
+
+
+func _heal_action():
+	hero.take_damage(-1)
+	update_batteries(hero.current_hp)
+	start_enemy_turn()
+
+
+func _buff_action():
+	hero.attack_power += 2
+	print("Сила атаки увеличена на 2!")
+	start_enemy_turn()
+
+'''
+#############################################################
+					СЛАЙДЕРЫ (ЗАЩИТА)
+#############################################################
+'''
 
 func spawn_slash_slider(event: Dictionary):
 	var slider = slider_scene.instantiate()
@@ -150,6 +236,8 @@ func _on_counter_fail(slider):
 	hero.take_damage(enemy.attack_power)
 	_on_obj_miss(slider)
 	update_batteries(hero.current_hp)
+	if not hero.is_alive():
+		lose()
 
 
 func _on_obj_hit(obj):
@@ -165,12 +253,10 @@ func _on_obj_miss(obj):
 		pos = obj.get_end_position()
 	show_popup("Miss!", pos)
 	active_objects.erase(obj)
-	
-	
 
 
 func _on_turn_timer_timeout():
-	if not is_enemy_turn:
+	if is_player_turn:
 		print("Время вышло! Ход переходит врагу.")
 		start_enemy_turn()
 

@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://kp660badre05"]
+
+[ext_resource type="Script" uid="uid://tgjqvuml3h8m" path="res://scripts/combat_action_interface.gd" id="1_44xxf"]
+
+[node name="Panel" type="Panel" unique_id=599973988]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_44xxf")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=702621852]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Button" type="Button" parent="HBoxContainer" unique_id=1562099546]
+layout_mode = 2

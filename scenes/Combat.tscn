@@ -4,13 +4,18 @@
 [ext_resource type="PackedScene" uid="uid://01i2pevuveoy" path="res://scenes/Hero.tscn" id="2_hrlpu"]
 [ext_resource type="PackedScene" uid="uid://ddxn1qw42c3s3" path="res://scenes/Enemy.tscn" id="3_0qy8o"]
 [ext_resource type="PackedScene" uid="uid://vhdiic6asloc" path="res://scenes/Battery.tscn" id="4_0qy8o"]
+[ext_resource type="PackedScene" uid="uid://kp660badre05" path="res://scenes/CombatActionInterface.tscn" id="5_tp2sa"]
+
+[sub_resource type="SystemFont" id="SystemFont_tp2sa"]
 
 [node name="CombatScene" type="Node2D" unique_id=921132435]
 
-[node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy")]
+[node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy", "action_menu", "death_screen")]
 script = ExtResource("1_4r6s1")
 hero = NodePath("Hero")
 enemy = NodePath("Enemy")
+action_menu = NodePath("ActionButtonsMenu")
+death_screen = NodePath("../DeathScreen")
 
 [node name="TurnTimer" type="Timer" parent="GameMaster" unique_id=660013388]
 one_shot = true
@@ -37,5 +42,36 @@ position = Vector2(20, 170)
 
 [node name="Battery5" parent="GameMaster/BatteryContainer" unique_id=861449863 instance=ExtResource("4_0qy8o")]
 position = Vector2(20, 220)
+
+[node name="ActionButtonsMenu" parent="GameMaster" unique_id=599973988 instance=ExtResource("5_tp2sa")]
+visible = false
+offset_left = 397.0
+offset_top = 585.0
+offset_right = 404.0
+offset_bottom = 624.0
+
+[node name="DeathScreen" type="CanvasLayer" parent="." unique_id=1270721121]
+visible = false
+
+[node name="DarkBg" type="ColorRect" parent="DeathScreen" unique_id=352259427]
+modulate = Color(0, 0, 0, 0.7058824)
+offset_left = -3.0
+offset_top = -4.0
+offset_right = 1154.0
+offset_bottom = 644.0
+
+[node name="DeathTitle" type="Label" parent="DeathScreen/DarkBg" unique_id=157161909]
+layout_mode = 0
+offset_left = 422.0
+offset_top = 267.0
+offset_right = 773.0
+offset_bottom = 334.0
+theme_override_colors/font_color = Color(1, 1, 0.8901961, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_tp2sa")
+theme_override_font_sizes/font_size = 48
+text = "Вы Проиграли"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [connection signal="timeout" from="GameMaster/TurnTimer" to="GameMaster" method="_on_turn_timer_timeout"]
