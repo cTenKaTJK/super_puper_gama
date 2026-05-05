@@ -10,9 +10,10 @@ extends Node
 @export var action_menu: ActionMenu
 @export var death_screen: CanvasLayer
 
-@export var turn_time_limit: float = 3.0
+@export var turn_time_limit: float = 2.0
 
 @onready var turn_timer: Timer = $TurnTimer
+@onready var restart_btn = $"../DeathScreen/DeathRestart"
 
 
 var is_player_turn: bool = false
@@ -56,11 +57,13 @@ func _ready():
 		update_batteries(hero.current_hp)
 	action_menu.action_selected.connect(_on_action_selected)
 	start_turn()
-
-
+	if restart_btn:
+		restart_btn.pressed.connect(_restart_combat)
+		
+		
 func _input(event):
 	# открытие меню атаки только во время хода игрока
-	if is_player_turn and not is_menu_open and event.is_action_pressed("ui_accept"):
+	if hero.is_alive() and is_player_turn and not is_menu_open and event.is_action_pressed("ui_accept"):
 		open_menu()
 
 '''
@@ -124,7 +127,7 @@ func start_enemy_turn():
 		turn_timer.stop()
 	print("Ход врага.")
 	is_player_turn = false
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(0.7).timeout
 	enemy_attack()
 
 
@@ -156,13 +159,12 @@ func lose():
 		turn_timer.stop()
 	if is_menu_open:
 		close_menu()
-	show_death_screen()
-
-
-func show_death_screen():
-	get_tree().paused = true
 	death_screen.visible = true
 	action_menu.visible = false
+	if restart_btn:
+		restart_btn.disabled = false
+		restart_btn.grab_focus()
+	
 
 '''
 #############################################################
@@ -256,7 +258,7 @@ func _on_obj_miss(obj):
 
 
 func _on_turn_timer_timeout():
-	if is_player_turn:
+	if hero.is_alive() and is_player_turn:
 		print("Время вышло! Ход переходит врагу.")
 		start_enemy_turn()
 
@@ -267,3 +269,10 @@ func show_popup(text: String, pos: Vector2):
 		popup.position = pos
 		popup.get_node("ParticleLabel").text = text
 		add_child(popup)
+
+
+func _restart_combat() -> void:
+	if turn_timer.is_stopped() == false:
+		turn_timer.stop()
+	get_tree().reload_current_scene()
+	

@@ -3,12 +3,44 @@
 [ext_resource type="Script" uid="uid://d1p4nhbfwgomp" path="res://scripts/game_master.gd" id="1_4r6s1"]
 [ext_resource type="PackedScene" uid="uid://01i2pevuveoy" path="res://scenes/Hero.tscn" id="2_hrlpu"]
 [ext_resource type="PackedScene" uid="uid://ddxn1qw42c3s3" path="res://scenes/Enemy.tscn" id="3_0qy8o"]
-[ext_resource type="PackedScene" uid="uid://vhdiic6asloc" path="res://scenes/Battery.tscn" id="4_0qy8o"]
+[ext_resource type="PackedScene" path="res://scenes/Battery.tscn" id="4_0qy8o"]
 [ext_resource type="PackedScene" uid="uid://kp660badre05" path="res://scenes/CombatActionInterface.tscn" id="5_tp2sa"]
 
 [sub_resource type="SystemFont" id="SystemFont_tp2sa"]
 
 [node name="CombatScene" type="Node2D" unique_id=921132435]
+
+[node name="DeathScreen" type="CanvasLayer" parent="." unique_id=1270721121]
+visible = false
+
+[node name="DarkBg" type="ColorRect" parent="DeathScreen" unique_id=352259427]
+modulate = Color(0, 0, 0, 0.7058824)
+offset_left = -3.0
+offset_top = -4.0
+offset_right = 1154.0
+offset_bottom = 644.0
+
+[node name="DeathRestart" type="Button" parent="DeathScreen" unique_id=699646168]
+offset_left = 537.0
+offset_top = 396.0
+offset_right = 657.0
+offset_bottom = 456.0
+theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
+theme_override_font_sizes/font_size = 25
+text = "Рестарт"
+
+[node name="DeathTitle" type="Label" parent="DeathScreen" unique_id=157161909]
+offset_left = 419.0
+offset_top = 263.0
+offset_right = 770.0
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 1, 0.8901961, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_tp2sa")
+theme_override_font_sizes/font_size = 48
+text = "Вы Проиграли"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy", "action_menu", "death_screen")]
 script = ExtResource("1_4r6s1")
@@ -50,28 +82,5 @@ offset_top = 585.0
 offset_right = 404.0
 offset_bottom = 624.0
 
-[node name="DeathScreen" type="CanvasLayer" parent="." unique_id=1270721121]
-visible = false
-
-[node name="DarkBg" type="ColorRect" parent="DeathScreen" unique_id=352259427]
-modulate = Color(0, 0, 0, 0.7058824)
-offset_left = -3.0
-offset_top = -4.0
-offset_right = 1154.0
-offset_bottom = 644.0
-
-[node name="DeathTitle" type="Label" parent="DeathScreen/DarkBg" unique_id=157161909]
-layout_mode = 0
-offset_left = 422.0
-offset_top = 267.0
-offset_right = 773.0
-offset_bottom = 334.0
-theme_override_colors/font_color = Color(1, 1, 0.8901961, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_fonts/font = SubResource("SystemFont_tp2sa")
-theme_override_font_sizes/font_size = 48
-text = "Вы Проиграли"
-horizontal_alignment = 1
-vertical_alignment = 1
-
+[connection signal="pressed" from="DeathScreen/DeathRestart" to="GameMaster" method="_restart_combat"]
 [connection signal="timeout" from="GameMaster/TurnTimer" to="GameMaster" method="_on_turn_timer_timeout"]
