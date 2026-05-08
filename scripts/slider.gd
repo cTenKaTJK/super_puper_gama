@@ -10,7 +10,7 @@ var creation_time: int
 var current_time: int
 var lifetime: int
 
-var hit_radius: int = 50
+var hit_radius: int = 80
 var curr_point_index = 0
 var states: Array = ["not active", "active", "finished"]
 var state: int = 0

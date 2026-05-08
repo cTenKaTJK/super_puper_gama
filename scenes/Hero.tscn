@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://01i2pevuveoy"]
 
 [ext_resource type="Script" uid="uid://dvxplhdea6rkh" path="res://scripts/hero.gd" id="1_xsdj3"]
-[ext_resource type="Texture2D" uid="uid://cvbsy1v08vmne" path="res://src/sprites/hero/hero_sprite_1.jpg" id="2_3a4aj"]
+[ext_resource type="Texture2D" uid="uid://d1oiojtj2lmvs" path="res://src/sprites/hero/Hero-Sheet.png" id="2_yiovg"]
 
 [node name="Hero" type="Node2D" unique_id=1613334882]
 script = ExtResource("1_xsdj3")
+sprite_sheet = ExtResource("2_yiovg")
 
 [node name="HeroSprite" type="Sprite2D" parent="." unique_id=878207319]
-texture = ExtResource("2_3a4aj")
 
 [node name="HeroLabel" type="Label" parent="." unique_id=1223968976]
 offset_left = -60.0
@@ -22,3 +22,5 @@ theme_override_font_sizes/font_size = 32
 horizontal_alignment = 1
 vertical_alignment = 1
 uppercase = true
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1010810198]

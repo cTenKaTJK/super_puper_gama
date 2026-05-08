@@ -24,28 +24,34 @@ var actions: Dictionary = {
 	"Атака": _attack_action,
 	"Лечение": _heal_action,
 	"Усиление": _buff_action,}
+
 var up_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
-		Vector2(400,200),
-		Vector2(450,160),
-		Vector2(500,120),
-		Vector2(550,80),
-		Vector2(600,40)]}
+		Vector2(490, 100),  
+		Vector2(520, 200),  
+		Vector2(550, 300),  
+		Vector2(580, 400),  
+		Vector2(620, 500)
+		 
+	]}
+
 var middle_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
-		Vector2(400,300),
-		Vector2(450,300),
-		Vector2(500,300),
-		Vector2(550,300),
-		Vector2(600,300)]}
+		Vector2(350, 300),  
+		Vector2(450, 300), 
+		Vector2(550, 300),  
+		Vector2(650, 300), 
+		Vector2(750, 300)   
+	]}
+
 var down_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
-		Vector2(400,400),
-		Vector2(450,440),
-		Vector2(500,480),
-		Vector2(550,520),
-		Vector2(600,560)]}
-		
+		Vector2(490, 500),  
+		Vector2(520, 400),  
+		Vector2(550, 300),  
+		Vector2(580, 200),  
+		Vector2(620, 100)    
+	]}
 var turns: int = 0
 var active_objects: Array = []
 var batteries: Array = []
@@ -120,39 +126,91 @@ func start_turn():
 	turn_timer.start()
 
 
+# Переменные
+var current_enemy_attack_type: String = ""
+var is_enemy_attacking: bool = false
+
 func start_enemy_turn():
 	if is_menu_open:
 		close_menu()
 	if turn_timer.is_stopped() == false:
 		turn_timer.stop()
+	
 	print("Ход врага.")
 	is_player_turn = false
 	await get_tree().create_timer(0.7).timeout
 	enemy_attack()
 
-
 func enemy_attack():
 	print("Враг атакует!")
 	if hero.is_alive():
-		match enemy.choose_attack():
-			"up":
-				print("Атака сверху!")
-				spawn_slash_slider(up_slash_slider)
-			"middle":
-				print("Прямая атака!")
-				spawn_slash_slider(middle_slash_slider)
-			"down":
-				print("Атака снизу!")
-				spawn_slash_slider(down_slash_slider)
-	await get_tree().create_timer(2.0).timeout
+		# Подключаем сигналы
+		if not enemy.attack_started.is_connected(_on_enemy_attack_started):
+			enemy.attack_started.connect(_on_enemy_attack_started)
+		if not enemy.attack_hit.is_connected(_on_enemy_attack_hit):
+			enemy.attack_hit.connect(_on_enemy_attack_hit)
+		
+		# Запускаем атаку (замах + сразу сигнал для слайдера)
+		enemy.start_attack()
+		is_enemy_attacking = true
+	else:
+		end_enemy_turn()
+
+# Начало атаки - спавним слайдер
+func _on_enemy_attack_started(attack_type: String):
+	print("Атака началась! Спавн слайдера для: ", attack_type)
+	current_enemy_attack_type = attack_type
+	
+	# Спавним слайдер
+	match attack_type:
+		"up":
+			spawn_slash_slider(up_slash_slider)
+		"middle":
+			spawn_slash_slider(middle_slash_slider)
+		"down":
+			spawn_slash_slider(down_slash_slider)
+
+# Удар прошел (только если игрок промахнулся)
+func _on_enemy_attack_hit(attack_type: String):
+	print("Удар нанесен! Игрок получает урон")
+	hero.take_damage(enemy.attack_power)
+	update_batteries(hero.current_hp)
+	
+	if not hero.is_alive():
+		lose()
+	
+	end_enemy_turn()
+
+func end_enemy_turn():
+	is_enemy_attacking = false
+	current_enemy_attack_type = ""
+	await get_tree().create_timer(0.5).timeout
 	is_player_turn = true
 	end_turn()
-
 
 func end_turn():
 	print("Конец хода!")
 	turns += 1
 	start_turn()
+	
+func win():
+	print("ПОБЕДА!")
+	
+	if turn_timer.is_stopped() == false:
+		turn_timer.stop()
+	if is_menu_open:
+		close_menu()
+	
+	action_menu.visible = false
+	death_screen.visible = true
+	
+	var label = death_screen.get_node("Label") 
+	if label:
+		label.text = "ПОБЕДА!"
+	
+	if restart_btn:
+		restart_btn.disabled = false
+		restart_btn.grab_focus()
 
 func lose():
 	if turn_timer.is_stopped() == false:
@@ -189,13 +247,17 @@ func _on_action_selected(action_name: String):
 		print("Неизвестное действие: ", action_name)
 
 
+
 func _attack_action():
 	enemy.take_damage(hero.attack_power)
-	if enemy.is_alive():
-		start_enemy_turn()
-	else:
-		# конец боя
-		pass
+	
+	# ПРОВЕРЯЕМ, ЖИВ ЛИ ВРАГ
+	if not enemy.is_alive():
+		win()  # Вызываем победу
+		return
+	
+	# Если враг жив - продолжаем бой
+	start_enemy_turn()
 
 
 func _heal_action():
@@ -227,40 +289,71 @@ func spawn_slash_slider(event: Dictionary):
 	add_child(slider)
 	active_objects.push_back(slider)
 
-
 func _on_counter_success(slider):
 	print("Успешное отражение!")
+	
+	if is_enemy_attacking:
+		# 1. Сначала анимация героя (с правильным типом атаки)
+		await hero.play_counter_animation(current_enemy_attack_type)
+		
+		# 2. Наносим урон врагу
+		enemy.take_damage(hero.attack_power)
+		
+		# 3. Проверяем не умер ли враг
+		if not enemy.is_alive():
+			win()
+			return
+		
+		# 4. Отменяем атаку врага с анимацией
+		enemy.cancel_attack()
+	
 	_on_obj_hit(slider)
-	
-	
+	end_enemy_turn()
+
 func _on_counter_fail(slider):
 	print("Промах!")
-	hero.take_damage(enemy.attack_power)
+	
+	# Наносим удар
+	if is_enemy_attacking:
+		enemy.execute_hit()
+	
 	_on_obj_miss(slider)
-	update_batteries(hero.current_hp)
-	if not hero.is_alive():
-		lose()
+	# Урон будет нанесен в _on_enemy_attack_hit
+
+func _on_turn_timer_timeout():
+	if hero.is_alive() and is_player_turn:
+		print("Время вышло!")
+		
+		# Если враг атакует - наносим удар
+		if is_enemy_attacking:
+			enemy.execute_hit()
+		
+		start_enemy_turn()
 
 
 func _on_obj_hit(obj):
+	# Проверяем, что объект еще существует
+	if not is_instance_valid(obj):
+		return
+	
 	var pos = obj.global_position
 	if obj.has_method("get_end_position"):
 		pos = obj.get_end_position()
+	
 	show_popup("Counter!", pos)
 	active_objects.erase(obj)
 
 func _on_obj_miss(obj):
+	# Проверяем, что объект еще существует
+	if not is_instance_valid(obj):
+		return
+	
 	var pos = obj.global_position
 	if obj.has_method("get_end_position"):
 		pos = obj.get_end_position()
+	
 	show_popup("Miss!", pos)
 	active_objects.erase(obj)
-
-
-func _on_turn_timer_timeout():
-	if hero.is_alive() and is_player_turn:
-		print("Время вышло! Ход переходит врагу.")
-		start_enemy_turn()
 
 
 func show_popup(text: String, pos: Vector2):

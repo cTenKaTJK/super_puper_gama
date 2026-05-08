@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://d1p4nhbfwgomp" path="res://scripts/game_master.gd" id="1_4r6s1"]
 [ext_resource type="PackedScene" uid="uid://01i2pevuveoy" path="res://scenes/Hero.tscn" id="2_hrlpu"]
 [ext_resource type="PackedScene" uid="uid://ddxn1qw42c3s3" path="res://scenes/Enemy.tscn" id="3_0qy8o"]
-[ext_resource type="PackedScene" path="res://scenes/Battery.tscn" id="4_0qy8o"]
+[ext_resource type="PackedScene" uid="uid://vhdiic6asloc" path="res://scenes/Battery.tscn" id="4_0qy8o"]
 [ext_resource type="PackedScene" uid="uid://kp660badre05" path="res://scenes/CombatActionInterface.tscn" id="5_tp2sa"]
 
 [sub_resource type="SystemFont" id="SystemFont_tp2sa"]
@@ -53,7 +53,7 @@ death_screen = NodePath("../DeathScreen")
 one_shot = true
 
 [node name="Hero" parent="GameMaster" unique_id=1613334882 instance=ExtResource("2_hrlpu")]
-position = Vector2(237, 445)
+position = Vector2(285, 435)
 
 [node name="Enemy" parent="GameMaster" unique_id=921884441 instance=ExtResource("3_0qy8o")]
 position = Vector2(798, 252)
