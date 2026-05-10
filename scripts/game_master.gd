@@ -24,7 +24,7 @@ var is_menu_open: bool = false
 
 var start_time
 var actions: Dictionary = {
-	"Атака": _attack_action,
+	"": _foo, 
 	"Лечение": _heal_action,
 	"Усиление": _buff_action,}
 var up_slash_slider: Dictionary = {"type" : "slash",
@@ -55,8 +55,50 @@ var turns: int = 0
 var active_objects: Array = []
 var batteries: Array = []
 
+var music_player: AudioStreamPlayer
+var music_tracks: Array = []
 
+var sfx_player: AudioStreamPlayer
+var hit_sound: AudioStream
+var hurt_sound: AudioStream
+
+
+		
 func _ready():
+	
+	sfx_player = AudioStreamPlayer.new()
+	add_child(sfx_player)
+	sfx_player.volume_db = -10
+	var hit_path = "res://src/sfx/hit.mp3"          
+	var hurt_path = "res://src/sfx/hurt.mp3"
+	if ResourceLoader.exists(hit_path):
+		hit_sound = load(hit_path)
+	if ResourceLoader.exists(hurt_path):
+		hurt_sound = load(hurt_path)
+	
+	
+	music_player = AudioStreamPlayer.new()
+	add_child(music_player)
+	
+	music_player.volume_db = -20
+	
+	var dir = DirAccess.open("res://src/ost/battle_themes/")
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		while file_name != "":
+			if file_name.ends_with(".mp3"):
+				var track = load("res://src/ost/battle_themes/" + file_name)
+				if track:
+					music_tracks.append(track)
+			file_name = dir.get_next()
+			
+	if music_tracks.size() > 0:
+		var random_track = music_tracks[randi() % music_tracks.size()]
+		music_player.stream = random_track
+		music_player.play()
+	
+	
 	find_batteries()
 	if hero:
 		update_batteries(hero.current_hp)
@@ -181,6 +223,7 @@ func _on_enemy_attack_started(attack_type: String):
 # Удар прошел (только если игрок промахнулся)
 func _on_enemy_attack_hit(attack_type: String):
 	print("Удар нанесен! Игрок получает урон")
+	play_sound(hurt_sound)
 	hero.take_damage(enemy.attack_power)
 	update_batteries(hero.current_hp)
 	if not hero.is_alive():
@@ -245,16 +288,8 @@ func _on_action_selected(action_name: String):
 
 
 
-func _attack_action():
-	enemy.take_damage(hero.attack_power)
-	
-	# ПРОВЕРЯЕМ, ЖИВ ЛИ ВРАГ
-	if not enemy.is_alive():
-		win()  # Вызываем победу
-		return
-	
-	# Если враг жив - продолжаем бой
-	start_enemy_turn()
+func _foo():
+	pass
 
 
 func _heal_action():
@@ -289,12 +324,16 @@ func spawn_slash_slider(event: Dictionary):
 func _on_counter_success(slider):
 	print("Успешное отражение!")
 	
+	play_sound(hit_sound)
+	
 	if is_enemy_attacking:
 		# 1. Сначала анимация героя (с правильным типом атаки)
 		await hero.play_counter_animation(current_enemy_attack_type)
 		
+		
+		
 		# 2. Наносим урон врагу
-		enemy.take_damage(hero.attack_power * 0.5)
+		enemy.take_damage(hero.attack_power)
 		
 		# 3. Проверяем не умер ли враг
 		if not enemy.is_alive():
@@ -310,12 +349,12 @@ func _on_counter_success(slider):
 func _on_counter_fail(slider):
 	print("Промах!")
 	
-	# Наносим удар
+
 	if is_enemy_attacking:
 		enemy.execute_hit()
 	
 	_on_obj_miss(slider)
-	# Урон будет нанесен в _on_enemy_attack_hit
+
 
 func _on_turn_timer_timeout():
 	if hero.is_alive() and is_player_turn:
@@ -368,3 +407,8 @@ func _next_battle():
 	GameDataLoad.increase_difficulty()
 	get_tree().reload_current_scene()
 	
+	
+func play_sound(sound: AudioStream):
+	if sound and sfx_player:
+		sfx_player.stream = sound
+		sfx_player.play()

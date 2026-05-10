@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://ddxn1qw42c3s3" path="res://scenes/Enemy.tscn" id="3_0qy8o"]
 [ext_resource type="PackedScene" uid="uid://vhdiic6asloc" path="res://scenes/Battery.tscn" id="4_0qy8o"]
 [ext_resource type="PackedScene" uid="uid://kp660badre05" path="res://scenes/CombatActionInterface.tscn" id="5_tp2sa"]
+[ext_resource type="Texture2D" uid="uid://bm71ab7ws21um" path="res://src/hall.png" id="6_akg4l"]
 
 [sub_resource type="SystemFont" id="SystemFont_tp2sa"]
 
@@ -87,10 +88,10 @@ win_screen = NodePath("../WinScreen")
 one_shot = true
 
 [node name="Hero" parent="GameMaster" unique_id=1613334882 instance=ExtResource("2_hrlpu")]
-position = Vector2(285, 435)
+position = Vector2(367, 415)
 
 [node name="Enemy" parent="GameMaster" unique_id=921884441 instance=ExtResource("3_0qy8o")]
-position = Vector2(798, 252)
+position = Vector2(777, 245)
 
 [node name="BatteryContainer" type="Node2D" parent="GameMaster" unique_id=228977108]
 
@@ -115,6 +116,11 @@ offset_left = 397.0
 offset_top = 585.0
 offset_right = 404.0
 offset_bottom = 624.0
+
+[node name="Hall" type="Sprite2D" parent="." unique_id=1539369631]
+position = Vector2(573, 264)
+scale = Vector2(0.7361111, 0.7361111)
+texture = ExtResource("6_akg4l")
 
 [connection signal="pressed" from="DeathScreen/DeathRestart" to="GameMaster" method="_restart_combat"]
 [connection signal="timeout" from="GameMaster/TurnTimer" to="GameMaster" method="_on_turn_timer_timeout"]
