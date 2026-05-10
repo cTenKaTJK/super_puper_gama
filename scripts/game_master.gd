@@ -9,11 +9,14 @@ extends Node
 @export var battery_scene: PackedScene
 @export var action_menu: ActionMenu
 @export var death_screen: CanvasLayer
+@export var win_screen: CanvasLayer
 
 @export var turn_time_limit: float = 2.0
+var time_to_counter: int = 1200
 
 @onready var turn_timer: Timer = $TurnTimer
 @onready var restart_btn = $"../DeathScreen/DeathRestart"
+@onready var win_next_btn = $"../WinScreen/WinNext"
 
 
 var is_player_turn: bool = false
@@ -24,7 +27,6 @@ var actions: Dictionary = {
 	"Атака": _attack_action,
 	"Лечение": _heal_action,
 	"Усиление": _buff_action,}
-
 var up_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
 		Vector2(490, 100),  
@@ -32,9 +34,7 @@ var up_slash_slider: Dictionary = {"type" : "slash",
 		Vector2(550, 300),  
 		Vector2(580, 400),  
 		Vector2(620, 500)
-		 
 	]}
-
 var middle_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
 		Vector2(350, 300),  
@@ -43,7 +43,6 @@ var middle_slash_slider: Dictionary = {"type" : "slash",
 		Vector2(650, 300), 
 		Vector2(750, 300)   
 	]}
-
 var down_slash_slider: Dictionary = {"type" : "slash",
 	"checkpoints" : [
 		Vector2(490, 500),  
@@ -61,10 +60,19 @@ func _ready():
 	find_batteries()
 	if hero:
 		update_batteries(hero.current_hp)
+	if enemy:
+		enemy.max_hp = GameDataLoad.enemy_base_hp
+		enemy.current_hp = enemy.max_hp
+		enemy.attack_power = GameDataLoad.enemy_base_attack
+		enemy.health_updated.emit(enemy.current_hp, enemy.max_hp)
+		turn_time_limit = GameDataLoad.turn_time_limit
+		time_to_counter = GameDataLoad.time_to_counter
 	action_menu.action_selected.connect(_on_action_selected)
 	start_turn()
 	if restart_btn:
 		restart_btn.pressed.connect(_restart_combat)
+	if win_next_btn:
+		win_next_btn.pressed.connect(_next_battle)
 		
 		
 func _input(event):
@@ -97,7 +105,7 @@ func find_batteries():
 
 func update_batteries(current_hp: int):
 	for i in range(batteries.size()):
-		var should_be_visible = (i < current_hp)
+		var should_be_visible = (i < (current_hp * 0.1))
 		if batteries[i].visible != should_be_visible:
 			if should_be_visible:
 					# Анимация появления
@@ -175,16 +183,14 @@ func _on_enemy_attack_hit(attack_type: String):
 	print("Удар нанесен! Игрок получает урон")
 	hero.take_damage(enemy.attack_power)
 	update_batteries(hero.current_hp)
-	
 	if not hero.is_alive():
 		lose()
-	
 	end_enemy_turn()
 
 func end_enemy_turn():
 	is_enemy_attacking = false
 	current_enemy_attack_type = ""
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(0.3).timeout
 	is_player_turn = true
 	end_turn()
 
@@ -194,23 +200,14 @@ func end_turn():
 	start_turn()
 	
 func win():
-	print("ПОБЕДА!")
-	
 	if turn_timer.is_stopped() == false:
 		turn_timer.stop()
 	if is_menu_open:
 		close_menu()
-	
+	win_screen.visible = true
 	action_menu.visible = false
-	death_screen.visible = true
-	
-	var label = death_screen.get_node("Label") 
-	if label:
-		label.text = "ПОБЕДА!"
-	
-	if restart_btn:
-		restart_btn.disabled = false
-		restart_btn.grab_focus()
+	if win_next_btn:
+		win_next_btn.grab_focus()
 
 func lose():
 	if turn_timer.is_stopped() == false:
@@ -261,14 +258,14 @@ func _attack_action():
 
 
 func _heal_action():
-	hero.take_damage(-1)
+	hero.take_damage(-10)
 	update_batteries(hero.current_hp)
 	start_enemy_turn()
 
 
 func _buff_action():
-	hero.attack_power += 2
-	print("Сила атаки увеличена на 2!")
+	hero.attack_power *= 1.5
+	print("Сила атаки увеличена на 50%!")
 	start_enemy_turn()
 
 '''
@@ -281,7 +278,7 @@ func spawn_slash_slider(event: Dictionary):
 	var slider = slider_scene.instantiate()
 	slider.checkpoints = event.checkpoints
 	slider.creation_time = Time.get_ticks_msec()
-	slider.lifetime = 1000
+	slider.lifetime = time_to_counter
 	
 	slider.slider_hit.connect(_on_counter_success)
 	slider.slider_miss.connect(_on_counter_fail)
@@ -297,7 +294,7 @@ func _on_counter_success(slider):
 		await hero.play_counter_animation(current_enemy_attack_type)
 		
 		# 2. Наносим урон врагу
-		enemy.take_damage(hero.attack_power)
+		enemy.take_damage(hero.attack_power * 0.5)
 		
 		# 3. Проверяем не умер ли враг
 		if not enemy.is_alive():
@@ -323,11 +320,8 @@ func _on_counter_fail(slider):
 func _on_turn_timer_timeout():
 	if hero.is_alive() and is_player_turn:
 		print("Время вышло!")
-		
-		# Если враг атакует - наносим удар
 		if is_enemy_attacking:
 			enemy.execute_hit()
-		
 		start_enemy_turn()
 
 
@@ -367,5 +361,10 @@ func show_popup(text: String, pos: Vector2):
 func _restart_combat() -> void:
 	if turn_timer.is_stopped() == false:
 		turn_timer.stop()
+	get_tree().reload_current_scene()
+	
+func _next_battle():
+	print("Переход на следующий уровень")
+	GameDataLoad.increase_difficulty()
 	get_tree().reload_current_scene()
 	

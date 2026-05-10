@@ -41,7 +41,6 @@ func _ready():
 
 func load_sprite_sheet():
 	if not sprite_sheet:
-		print("ОШИБКА: Перетащи спрайтшит в поле Sprite Sheet!")
 		return
 	
 	for i in range(8):
@@ -112,7 +111,7 @@ func cancel_attack():
 	if not is_attacking:
 		return
 	
-	print("Атака отменена! Противник получает урон от каунтера")
+	print(display_name + " получил урон. Осталось HP: " + str(current_hp))
 	
 	# Показываем анимацию получения урона (спрайт 8)
 	play_hurt_animation()

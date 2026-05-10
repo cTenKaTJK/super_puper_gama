@@ -10,6 +10,39 @@
 
 [node name="CombatScene" type="Node2D" unique_id=921132435]
 
+[node name="WinScreen" type="CanvasLayer" parent="." unique_id=705100757]
+visible = false
+
+[node name="DarkBg" type="ColorRect" parent="WinScreen" unique_id=1003450491]
+modulate = Color(0, 0, 0, 0.7058824)
+offset_left = -3.0
+offset_top = -4.0
+offset_right = 1154.0
+offset_bottom = 644.0
+
+[node name="WinNext" type="Button" parent="WinScreen" unique_id=965173936]
+offset_left = 537.0
+offset_top = 396.0
+offset_right = 657.0
+offset_bottom = 456.0
+theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
+theme_override_font_sizes/font_size = 25
+text = "На следующий
+     Уровень"
+
+[node name="WinTitle" type="Label" parent="WinScreen" unique_id=557216318]
+offset_left = 419.0
+offset_top = 263.0
+offset_right = 770.0
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 1, 0.8901961, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = SubResource("SystemFont_tp2sa")
+theme_override_font_sizes/font_size = 48
+text = "Вы Выиграли!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="DeathScreen" type="CanvasLayer" parent="." unique_id=1270721121]
 visible = false
 
@@ -42,12 +75,13 @@ text = "Вы Проиграли"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy", "action_menu", "death_screen")]
+[node name="GameMaster" type="Node" parent="." unique_id=738099199 node_paths=PackedStringArray("hero", "enemy", "action_menu", "death_screen", "win_screen")]
 script = ExtResource("1_4r6s1")
 hero = NodePath("Hero")
 enemy = NodePath("Enemy")
 action_menu = NodePath("ActionButtonsMenu")
 death_screen = NodePath("../DeathScreen")
+win_screen = NodePath("../WinScreen")
 
 [node name="TurnTimer" type="Timer" parent="GameMaster" unique_id=660013388]
 one_shot = true

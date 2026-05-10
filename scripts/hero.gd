@@ -14,8 +14,8 @@ enum State {
 }
 
 var display_name: String = "Hero"
-var max_hp: int = 5
-var attack_power: int = 2
+var max_hp: int = 50
+var attack_power: int = 10
 var current_hp: int
 
 # Анимация
