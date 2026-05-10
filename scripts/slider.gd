@@ -15,14 +15,16 @@ var curr_point_index = 0
 var states: Array = ["not active", "active", "finished"]
 var state: int = 0
 
+@onready var path_line: Line2D = $PathLine
+@onready var start_indicator: Sprite2D = $StartIndicator
+
 func _ready() -> void:
 	creation_time = Time.get_ticks_msec()
-	for i in checkpoints.size():
-		var tile = Sprite2D.new()
-		tile.texture = preload("res://src/sprites/note.png")
-		tile.position = checkpoints[i]
-		tile.scale = Vector2(0.5, 0.5)
-		add_child(tile)
+	if checkpoints.size() > 0:
+		start_indicator.position = checkpoints[0]
+		start_indicator.visible = true
+	if checkpoints.size() >= 2:
+		path_line.points = checkpoints
 
 
 func _process(delta: float) -> void:
@@ -53,6 +55,7 @@ func _process(delta: float) -> void:
 func activate():
 	state = 1
 	curr_point_index = 1
+	start_indicator.visible = false
 		
 		
 func hit():

@@ -65,7 +65,7 @@ func set_state(new_state: State):
 	if textures.has(current_state) and textures[current_state]:
 		sprite.texture = textures[current_state]
 
-# АНИМАЦИЯ КАУНТЕРА (вызывается при успешном отражении)
+
 func play_counter_animation(attack_type: String):
 	if is_attacking:
 		return
@@ -84,16 +84,12 @@ func play_counter_animation(attack_type: String):
 			set_state(State.ATTACK_DOWN)
 			print("Каунтер: удар СНИЗУ!")
 	
-	# Ждем анимацию удара
 	await get_tree().create_timer(0.2).timeout
-	
-	# Возвращаемся в стойку
 	set_state(State.IDLE)
 	is_attacking = false
-	
 	attack_animation_finished.emit()
 
-# АНИМАЦИЯ ПОЛУЧЕНИЯ УРОНА
+
 func play_hurt_animation():
 	var previous_state = current_state
 	
@@ -110,7 +106,7 @@ func play_hurt_animation():
 	else:
 		set_state(State.IDLE)
 
-# ПОЛУЧЕНИЕ УРОНА
+
 func take_damage(damage: int):
 	var old_hp = current_hp
 	current_hp -= damage
@@ -119,13 +115,12 @@ func take_damage(damage: int):
 		current_hp = 0
 	if current_hp > max_hp:
 		current_hp = max_hp
-	
+		
 	if damage > 0:
 		print(display_name + " получил " + str(damage) + " урона. Осталось HP: " + str(current_hp))
 		await play_hurt_animation()
 	else:
 		print(display_name + " вылечился на " + str(-damage) + ". Осталось HP: " + str(current_hp))
-	
 	health_updated.emit(current_hp, max_hp)
 
 func is_alive() -> bool:

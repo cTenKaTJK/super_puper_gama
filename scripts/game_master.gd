@@ -13,6 +13,8 @@ extends Node
 
 @export var turn_time_limit: float = 2.0
 var time_to_counter: int = 1200
+var turn: int = 0
+var buff_turn: int
 
 @onready var turn_timer: Timer = $TurnTimer
 @onready var restart_btn = $"../DeathScreen/DeathRestart"
@@ -20,6 +22,7 @@ var time_to_counter: int = 1200
 
 
 var is_player_turn: bool = false
+var is_hero_buffed: bool = false
 var is_menu_open: bool = false
 
 var start_time
@@ -51,6 +54,33 @@ var down_slash_slider: Dictionary = {"type" : "slash",
 		Vector2(580, 200),  
 		Vector2(620, 100)    
 	]}
+var circle_slider : Dictionary = {"type" : "circle",
+	"checkpoints" : [
+		Vector2(376, 324),
+		Vector2(435, 183),
+		Vector2(576, 124),
+		Vector2(717, 183),
+		Vector2(776, 324),
+		Vector2(717, 465),
+		Vector2(576, 524),
+		Vector2(435, 465)
+		]}
+var wave_slider : Dictionary = {"type" : "wave",
+	"checkpoints" : [
+		Vector2(400, 500),
+		Vector2(440, 350),
+		Vector2(480, 200),
+		Vector2(520, 350),
+		Vector2(560, 500),
+		Vector2(600, 350),
+		Vector2(640, 200),
+		Vector2(680, 350),
+		Vector2(720, 500),
+		Vector2(760, 350),
+		Vector2(800, 200),
+		Vector2(840, 350),
+		Vector2(880, 500)
+		]}
 var turns: int = 0
 var active_objects: Array = []
 var batteries: Array = []
@@ -76,7 +106,6 @@ func _ready():
 	if ResourceLoader.exists(hurt_path):
 		hurt_sound = load(hurt_path)
 	
-	
 	music_player = AudioStreamPlayer.new()
 	add_child(music_player)
 	
@@ -92,15 +121,14 @@ func _ready():
 				if track:
 					music_tracks.append(track)
 			file_name = dir.get_next()
-			
 	if music_tracks.size() > 0:
 		var random_track = music_tracks[randi() % music_tracks.size()]
 		music_player.stream = random_track
 		music_player.play()
 	
-	
 	find_batteries()
 	if hero:
+		hero.current_hp = GameDataLoad.hero_curr_hp
 		update_batteries(hero.current_hp)
 	if enemy:
 		enemy.max_hp = GameDataLoad.enemy_base_hp
@@ -112,7 +140,7 @@ func _ready():
 	action_menu.action_selected.connect(_on_action_selected)
 	start_turn()
 	if restart_btn:
-		restart_btn.pressed.connect(_restart_combat)
+		restart_btn.pressed.connect(_return_to_menu)
 	if win_next_btn:
 		win_next_btn.pressed.connect(_next_battle)
 		
@@ -169,10 +197,13 @@ func update_batteries(current_hp: int):
 '''
 
 func start_turn():
+	turn += 1
+	if is_hero_buffed and (turn - buff_turn) > 1:
+		is_hero_buffed = false
 	print("-----------------------------------")
 	print("Начало хода")
 	is_player_turn = true
-	turn_timer.wait_time = turn_time_limit
+	turn_timer.wait_time = randi_range(turn_time_limit * 0.8, turn_time_limit * 1.2)
 	turn_timer.start()
 
 
@@ -199,14 +230,13 @@ func enemy_attack():
 			enemy.attack_started.connect(_on_enemy_attack_started)
 		if not enemy.attack_hit.is_connected(_on_enemy_attack_hit):
 			enemy.attack_hit.connect(_on_enemy_attack_hit)
-		
 		# Запускаем атаку (замах + сразу сигнал для слайдера)
 		enemy.start_attack()
 		is_enemy_attacking = true
 	else:
 		end_enemy_turn()
 
-# Начало атаки - спавним слайдер
+
 func _on_enemy_attack_started(attack_type: String):
 	print("Атака началась! Спавн слайдера для: ", attack_type)
 	current_enemy_attack_type = attack_type
@@ -219,9 +249,13 @@ func _on_enemy_attack_started(attack_type: String):
 			spawn_slash_slider(middle_slash_slider)
 		"down":
 			spawn_slash_slider(down_slash_slider)
+		"circle":
+			spawn_slash_slider(circle_slider)
+		"wave":
+			spawn_slash_slider(wave_slider)
 
 # Удар прошел (только если игрок промахнулся)
-func _on_enemy_attack_hit(attack_type: String):
+func _on_enemy_attack_hit():
 	print("Удар нанесен! Игрок получает урон")
 	play_sound(hurt_sound)
 	hero.take_damage(enemy.attack_power)
@@ -233,7 +267,7 @@ func _on_enemy_attack_hit(attack_type: String):
 func end_enemy_turn():
 	is_enemy_attacking = false
 	current_enemy_attack_type = ""
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.1).timeout
 	is_player_turn = true
 	end_turn()
 
@@ -243,6 +277,7 @@ func end_turn():
 	start_turn()
 	
 func win():
+	GameDataLoad.hero_curr_hp = hero.current_hp
 	if turn_timer.is_stopped() == false:
 		turn_timer.stop()
 	if is_menu_open:
@@ -260,9 +295,8 @@ func lose():
 	death_screen.visible = true
 	action_menu.visible = false
 	if restart_btn:
-		restart_btn.disabled = false
 		restart_btn.grab_focus()
-	
+
 
 '''
 #############################################################
@@ -287,20 +321,21 @@ func _on_action_selected(action_name: String):
 		print("Неизвестное действие: ", action_name)
 
 
-
 func _foo():
 	pass
 
 
 func _heal_action():
 	hero.take_damage(-10)
+	show_popup("Heal +10", Vector2(350,200), Color.LIME)
 	update_batteries(hero.current_hp)
 	start_enemy_turn()
 
 
 func _buff_action():
-	hero.attack_power *= 1.5
-	print("Сила атаки увеличена на 50%!")
+	show_popup("Buff x1.75", Vector2(350,200), Color.CYAN)
+	is_hero_buffed = true
+	buff_turn = turn
 	start_enemy_turn()
 
 '''
@@ -327,20 +362,14 @@ func _on_counter_success(slider):
 	play_sound(hit_sound)
 	
 	if is_enemy_attacking:
-		# 1. Сначала анимация героя (с правильным типом атаки)
 		await hero.play_counter_animation(current_enemy_attack_type)
 		
+		enemy.take_damage(hero.attack_power + (int(is_hero_buffed) * hero.attack_power * 0.75))
 		
-		
-		# 2. Наносим урон врагу
-		enemy.take_damage(hero.attack_power)
-		
-		# 3. Проверяем не умер ли враг
 		if not enemy.is_alive():
 			win()
 			return
 		
-		# 4. Отменяем атаку врага с анимацией
 		enemy.cancel_attack()
 	
 	_on_obj_hit(slider)
@@ -348,11 +377,9 @@ func _on_counter_success(slider):
 
 func _on_counter_fail(slider):
 	print("Промах!")
-	
-
 	if is_enemy_attacking:
 		enemy.execute_hit()
-	
+	_on_enemy_attack_hit()
 	_on_obj_miss(slider)
 
 
@@ -365,7 +392,6 @@ func _on_turn_timer_timeout():
 
 
 func _on_obj_hit(obj):
-	# Проверяем, что объект еще существует
 	if not is_instance_valid(obj):
 		return
 	
@@ -373,11 +399,10 @@ func _on_obj_hit(obj):
 	if obj.has_method("get_end_position"):
 		pos = obj.get_end_position()
 	
-	show_popup("Counter!", pos)
+	show_popup("Counter!", pos, Color.CYAN)
 	active_objects.erase(obj)
 
 func _on_obj_miss(obj):
-	# Проверяем, что объект еще существует
 	if not is_instance_valid(obj):
 		return
 	
@@ -385,22 +410,22 @@ func _on_obj_miss(obj):
 	if obj.has_method("get_end_position"):
 		pos = obj.get_end_position()
 	
-	show_popup("Miss!", pos)
+	show_popup("Miss!", pos, Color.INDIAN_RED)
 	active_objects.erase(obj)
 
 
-func show_popup(text: String, pos: Vector2):
+func show_popup(text: String, pos: Vector2, color):
 	if popup_scene:
 		var popup = popup_scene.instantiate()
+		popup.display_text = text
+		popup.text_color = color
 		popup.position = pos
-		popup.get_node("ParticleLabel").text = text
 		add_child(popup)
 
 
-func _restart_combat() -> void:
-	if turn_timer.is_stopped() == false:
-		turn_timer.stop()
-	get_tree().reload_current_scene()
+func _return_to_menu():
+	GameDataLoad.reset_game()
+	get_tree().change_scene_to_file("res://scenes/Main.tscn")
 	
 func _next_battle():
 	print("Переход на следующий уровень")

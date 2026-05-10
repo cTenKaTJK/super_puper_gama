@@ -14,16 +14,14 @@ enum State {
 @export var sprite_sheet: Texture2D
 @export var frame_width: int = 64
 @export var frame_height: int = 64
-@export var sprite_scale: float = 1.0  # 1 = оригинал, 2 = в 2 раза больше
-
-
+@export var sprite_scale: float = 1.0
 
 
 var sprite: Sprite2D
 var textures: Dictionary = {}
 var current_state: State = State.IDLE
-var current_hp: int = 10
-var max_hp: int = 10
+var current_hp: int
+var max_hp: int
 var display_name: String = "Enemy"
 var attack_power: int = 1
 var is_attacking: bool = false
@@ -67,6 +65,10 @@ func set_state(new_state: State):
 
 func choose_attack():
 	var attacks = ["up", "middle", "down"]
+	if GameDataLoad.level > 3:
+		attacks.append("circle")
+	if GameDataLoad.level > 5:
+		attacks.append("wave")
 	return attacks[randi() % attacks.size()]
 
 func start_attack():
@@ -83,6 +85,10 @@ func start_attack():
 			set_state(State.WINDUP_MIDDLE)
 		"down":
 			set_state(State.WINDUP_DOWN)
+		"circle":
+			set_state(State.WINDUP_MIDDLE)
+		"wave":
+			set_state(State.WINDUP_MIDDLE)
 	
 	attack_started.emit(current_attack_type)
 
@@ -99,6 +105,10 @@ func execute_hit():
 			set_state(State.ATTACK_MIDDLE)
 		"down":
 			set_state(State.ATTACK_DOWN)
+		"circle":
+			set_state(State.ATTACK_MIDDLE)
+		"wave":
+			set_state(State.ATTACK_MIDDLE)
 	
 	attack_hit.emit(current_attack_type)
 	await get_tree().create_timer(0.3).timeout
@@ -106,40 +116,30 @@ func execute_hit():
 	set_state(State.IDLE)
 	is_attacking = false
 
-# ИЗМЕНЕННЫЙ МЕТОД - теперь показывает анимацию получения урона при каунтере
+
 func cancel_attack():
 	if not is_attacking:
 		return
 	
-	print(display_name + " получил урон. Осталось HP: " + str(current_hp))
-	
-	# Показываем анимацию получения урона (спрайт 8)
 	play_hurt_animation()
 	
-	# Ждем анимацию
 	await get_tree().create_timer(0.2).timeout
 	
-	# Возвращаемся в стойку
 	set_state(State.IDLE)
 	is_attacking = false
 
-# Отдельный метод для анимации получения урона с красной вспышкой
+
 func play_hurt_animation():
-	# Сохраняем текущее состояние
 	var previous_state = current_state
 	
-	# Переключаемся на спрайт получения урона
 	set_state(State.HURT)
 	
-	# Красная вспышка
 	var tween = create_tween()
 	tween.tween_property(sprite, "modulate", Color.RED, 0.05)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.15)
 	
-	# Небольшая задержка
 	await get_tree().create_timer(0.2).timeout
 	
-	# Возвращаемся в предыдущее состояние (если не IDLE)
 	if previous_state != State.HURT:
 		set_state(previous_state)
 
@@ -147,13 +147,11 @@ func take_damage(damage: int):
 	current_hp -= damage
 	if current_hp < 0:
 		current_hp = 0
-	
 	print(display_name + " получил " + str(damage) + " урона. Осталось HP: " + str(current_hp))
-	
 	if damage > 0:
 		await play_hurt_animation()
-	
 	health_updated.emit(current_hp, max_hp)
+
 
 func is_alive() -> bool:
 	return current_hp > 0
