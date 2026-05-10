@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c5kambwb0e5u3"]
 
 [ext_resource type="Script" uid="uid://bbyfton4lmap8" path="res://scripts/particles.gd" id="1_2ptj6"]
+[ext_resource type="FontFile" uid="uid://cauvg5roqc47a" path="res://src/fonts/Bitcount/static/Bitcount_Roman-Regular.ttf" id="2_4maip"]
 
 [node name="ParticleNode" type="Node2D" unique_id=1004603873]
 script = ExtResource("1_2ptj6")
@@ -8,5 +9,6 @@ script = ExtResource("1_2ptj6")
 [node name="ParticleLabel" type="Label" parent="." unique_id=1431607378]
 offset_right = 40.0
 offset_bottom = 23.0
-theme_override_colors/font_color = Color(0.52005285, 0.00019334123, 0.5200488, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.9256612, 0.1922094, 0.14309934, 1)
+theme_override_fonts/font = ExtResource("2_4maip")
+theme_override_font_sizes/font_size = 28

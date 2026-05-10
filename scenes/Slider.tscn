@@ -1,8 +1,15 @@
 [gd_scene format=3 uid="uid://3ygvm8oj65yg"]
 
 [ext_resource type="Script" uid="uid://bamg4usg4jeqa" path="res://scripts/slider.gd" id="1_3iwyn"]
+[ext_resource type="Texture2D" uid="uid://bmhdh6e6nbbj" path="res://src/sprites/note.png" id="2_rhxii"]
 
 [node name="Slider" type="Node2D" unique_id=1427078580]
 script = ExtResource("1_3iwyn")
 
-[node name="SliderSprite" type="Sprite2D" parent="." unique_id=1894550390]
+[node name="StartIndicator" type="Sprite2D" parent="." unique_id=1894550390]
+visible = false
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_rhxii")
+
+[node name="PathLine" type="Line2D" parent="." unique_id=1531218871]
+default_color = Color(1, 1, 1, 0.49411765)
