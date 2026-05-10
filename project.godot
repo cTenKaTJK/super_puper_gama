@@ -15,6 +15,10 @@ run/main_scene="uid://cunkfv074wm7q"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GameDataLoad="*uid://um7obp74qjda"
+
 [input]
 
 open_actions_menu={
